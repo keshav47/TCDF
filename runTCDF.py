@@ -253,6 +253,7 @@ def main(datafiles, evaluation, columns):
         allcauses, alldelays, allreallosses, allscores, columns = runTCDF(datafile,columns) #results of TCDF containing indices of causes and effects
 
         print("\n===================Results for", stringdatafile,"==================================")
+        print(alldelays)
         for pair in alldelays:
             print(columns[pair[1]], "causes", columns[pair[0]],"with a delay of",alldelays[pair],"time steps.")
 
