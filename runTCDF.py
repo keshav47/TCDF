@@ -254,6 +254,7 @@ def main(datafiles, evaluation, columns):
 
         print("\n===================Results for", stringdatafile,"==================================")
         print(alldelays)
+        print(columns)
         for pair in alldelays:
             print(columns[pair[1]], "causes", columns[pair[0]],"with a delay of",alldelays[pair],"time steps.")
 
