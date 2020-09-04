@@ -336,10 +336,12 @@ print(columns)
 
 if args.ground_truth is not None:
     datafiles = args.ground_truth
-    main(datafiles, evaluation=True,columns)
+    evaluation=True
+    main(datafiles, evaluation,columns)
 
 else:
     datafiles = dict()
     for dataset in args.data:
         datafiles[dataset]=""
-    main(datafiles, evaluation=False,columns)
+    evaluation=False
+    main(datafiles, evaluation,columns)
