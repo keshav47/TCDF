@@ -332,12 +332,14 @@ cuda=args.cuda
 significance=args.significance
 columns = args.columns
 
+print(columns)
+
 if args.ground_truth is not None:
     datafiles = args.ground_truth
-    main(datafiles, evaluation=True)
+    main(datafiles, evaluation=True,columns)
 
 else:
     datafiles = dict()
     for dataset in args.data:
         datafiles[dataset]=""
-    main(datafiles, evaluation=False)
+    main(datafiles, evaluation=False,columns)
