@@ -53,7 +53,7 @@ def getextendeddelays(gtfile, columns):
         readgt[key].append(value)
         pairdelays[(key, value)]=delays[i]
         gtnrrelations+=1
-    
+
     g = nx.DiGraph()
     g.add_nodes_from(readgt.keys())
     for e in readgt:
@@ -62,17 +62,17 @@ def getextendeddelays(gtfile, columns):
             g.add_edge(c, e)
 
     extendedreadgt = copy.deepcopy(readgt)
-    
+
     for c1 in range(len(columns)):
         for c2 in range(len(columns)):
             paths = list(nx.all_simple_paths(g, c1, c2, cutoff=2)) #indirect path max length 3, no cycles
-            
+
             if len(paths)>0:
                 for path in paths:
                     for p in path[:-1]:
                         if p not in extendedreadgt[path[-1]]:
                             extendedreadgt[path[-1]].append(p)
-                            
+
     extendedgtdelays = dict()
     for effect in extendedreadgt:
         causes = extendedreadgt[effect]
@@ -123,7 +123,7 @@ def evaluate(gtfile, validatedcauses, columns):
             if v not in validatedcauses[key]:
                 FN+=1
                 FNs.append((key, v))
-          
+
     print("Total False Positives': ", FP)
     print("Total True Positives': ", TP)
     print("Total False Negatives: ", FN)
@@ -176,17 +176,17 @@ def evaluatedelay(extendedgtdelays, alldelays, TPs, receptivefield):
                 error = d - discovereddelay
                 if error == 0:
                     zeros+=1
-                
+
             else:
                 next
-           
+
     if zeros==0:
         return 0.
     else:
         return zeros/float(total)
 
 
-def runTCDF(datafile):
+def runTCDF(datafile,columns):
     """Loops through all variables in a dataset and return the discovered causes, time delays, losses, attention scores and variable names."""
     df_data = pd.read_csv(datafile)
 
@@ -195,11 +195,12 @@ def runTCDF(datafile):
     allreallosses=dict()
     allscores=dict()
 
-    columns = list(df_data)
+    if columns == None:
+        list(df_data)
     for c in columns:
         idx = df_data.columns.get_loc(c)
-        causes, causeswithdelay, realloss, scores = TCDF.findcauses(c, cuda=cuda, epochs=nrepochs, 
-        kernel_size=kernel_size, layers=levels, log_interval=loginterval, 
+        causes, causeswithdelay, realloss, scores = TCDF.findcauses(c, cuda=cuda, epochs=nrepochs,
+        kernel_size=kernel_size, layers=levels, log_interval=loginterval,
         lr=learningrate, optimizername=optimizername,
         seed=seed, dilation_c=dilation_c, significance=significance, file=datafile)
 
@@ -220,19 +221,19 @@ def plotgraph(stringdatafile,alldelays,columns):
         nodepair = (columns[p2], columns[p1])
 
         G.add_edges_from([nodepair],weight=alldelays[pair])
-    
+
     edge_labels=dict([((u,v,),d['weight'])
                     for u,v,d in G.edges(data=True)])
-    
+
     pos=nx.circular_layout(G)
     nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)
     nx.draw(G,pos, node_color = 'white', edge_color='black',node_size=1000,with_labels = True)
     ax = plt.gca()
-    ax.collections[0].set_edgecolor("#000000") 
+    ax.collections[0].set_edgecolor("#000000")
 
     pylab.show()
 
-def main(datafiles, evaluation):
+def main(datafiles, evaluation, columns):
     if evaluation:
         totalF1direct = [] #contains F1-scores of all datasets
         totalF1 = [] #contains F1'-scores of all datasets
@@ -241,21 +242,21 @@ def main(datafiles, evaluation):
         for l in range(0, levels):
             receptivefield+=(kernel_size-1) * dilation_c**(l)
 
-    for datafile in datafiles.keys(): 
+    for datafile in datafiles.keys():
         stringdatafile = str(datafile)
         if '/' in stringdatafile:
             stringdatafile = str(datafile).rsplit('/', 1)[1]
-        
+
         print("\n Dataset: ", stringdatafile)
 
         # run TCDF
-        allcauses, alldelays, allreallosses, allscores, columns = runTCDF(datafile) #results of TCDF containing indices of causes and effects
+        allcauses, alldelays, allreallosses, allscores, columns = runTCDF(datafile,columns) #results of TCDF containing indices of causes and effects
 
         print("\n===================Results for", stringdatafile,"==================================")
         for pair in alldelays:
             print(columns[pair[1]], "causes", columns[pair[0]],"with a delay of",alldelays[pair],"time steps.")
 
-        
+
 
         if evaluation:
             # evaluate TCDF by comparing discovered causes with ground truth
@@ -268,15 +269,15 @@ def main(datafiles, evaluation):
             extendeddelays, readgt, extendedreadgt = getextendeddelays(datafiles[datafile], columns)
             percentagecorrect = evaluatedelay(extendeddelays, alldelays, TPs, receptivefield)*100
             print("Percentage of delays that are correctly discovered: ", percentagecorrect,"%")
-            
+
         print("==================================================================================")
-        
+
         if args.plot:
             plotgraph(stringdatafile, alldelays, columns)
 
     # In case of multiple datasets, calculate average F1-score over all datasets and standard deviation
-    if len(datafiles.keys())>1 and evaluation:  
-        print("\nOverall Evaluation: \n")      
+    if len(datafiles.keys())>1 and evaluation:
+        print("\nOverall Evaluation: \n")
         print("F1' scores: ")
         for f in totalF1:
             print(f)
@@ -296,7 +297,7 @@ parser = argparse.ArgumentParser(description='TCDF: Temporal Causal Discovery Fr
 parser.add_argument('--cuda', action="store_true", default=False, help='Use CUDA (GPU) (default: False)')
 parser.add_argument('--epochs', type=check_positive, default=1000, help='Number of epochs (default: 1000)')
 parser.add_argument('--kernel_size', type=check_positive, default=4, help='Size of kernel, i.e. window size. Maximum delay to be found is kernel size - 1. Recommended to be equal to dilation coeffient (default: 4)')
-parser.add_argument('--hidden_layers', type=check_zero_or_positive, default=0, help='Number of hidden layers in the depthwise convolution (default: 0)') 
+parser.add_argument('--hidden_layers', type=check_zero_or_positive, default=0, help='Number of hidden layers in the depthwise convolution (default: 0)')
 parser.add_argument('--learning_rate', type=float, default=0.01, help='Learning rate (default: 0.01)')
 parser.add_argument('--optimizer', type=str, default='Adam', choices=['Adam', 'RMSprop'], help='Optimizer to use (default: Adam)')
 parser.add_argument('--log_interval', type=check_positive, default=500, help='Epoch interval to report loss (default: 500)')
@@ -307,6 +308,7 @@ parser.add_argument('--plot', action="store_true", default=False, help='Show cau
 group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument('--ground_truth',action=StoreDictKeyPair, help='Provide dataset(s) and the ground truth(s) to evaluate the results of TCDF. Argument format: DataFile1=GroundtruthFile1,Key2=Value2,... with a key for each dataset containing multivariate time series (required file format: csv, a column with header for each time series) and a value for the corresponding ground truth (required file format: csv, no header, index of cause in first column, index of effect in second column, time delay between cause and effect in third column)')
 group.add_argument('--data', nargs='+', help='(Path to) one or more datasets to analyse by TCDF containing multiple time series. Required file format: csv with a column (incl. header) for each time series')
+parser.add_argument('--columns', nargs='+', default=None, help='Specify the column names you want to analyse, not setting it will lead to computation over the whole metrics')
 
 args = parser.parse_args()
 
@@ -328,6 +330,7 @@ loginterval = args.log_interval
 seed=args.seed
 cuda=args.cuda
 significance=args.significance
+columns = args.columns
 
 if args.ground_truth is not None:
     datafiles = args.ground_truth
