@@ -209,6 +209,8 @@ def runTCDF(datafile,columns):
         alldelays.update(causeswithdelay)
         allreallosses[idx]=realloss
 
+    columns = list(df_data)
+
     return allcauses, alldelays, allreallosses, allscores, columns
 
 def plotgraph(stringdatafile,alldelays,columns):
